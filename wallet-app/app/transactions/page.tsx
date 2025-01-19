@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowUpRight, ArrowDownRight, Filter, Download } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import AddTransaction from "@/components/AddTransaction";
+import ExportTransactionsDialog from "@/components/ExportTransactions";
 import { toast } from "sonner";
 
 // Predefined categories based on your TransactionModel
@@ -136,9 +136,16 @@ const TransactionsPage = () => {
 
   // Get available categories based on transaction type
   const getAvailableCategories = () => {
-    if (filters.type === "income") return INCOME_CATEGORIES;
-    if (filters.type === "expense") return EXPENSE_CATEGORIES;
-    return [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+    if (filters.type === "income") {
+      return INCOME_CATEGORIES.map((cat) => ({ type: "income", name: cat }));
+    }
+    if (filters.type === "expense") {
+      return EXPENSE_CATEGORIES.map((cat) => ({ type: "expense", name: cat }));
+    }
+    return [
+      ...INCOME_CATEGORIES.map((cat) => ({ type: "income", name: cat })),
+      ...EXPENSE_CATEGORIES.map((cat) => ({ type: "expense", name: cat })),
+    ];
   };
 
   // Helper function to get category name
@@ -168,14 +175,7 @@ const TransactionsPage = () => {
             </div>
             <div className="flex items-center gap-4">
               <AddTransaction onTransactionAdded={fetchTransactions} />
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
+              <ExportTransactionsDialog transactions={transactions} />
             </div>
           </div>
 
@@ -224,8 +224,13 @@ const TransactionsPage = () => {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {getAvailableCategories().map((category) => (
-                    <SelectItem key={category} value={category.toLowerCase()}>
-                      {category}
+                    <SelectItem
+                      key={`${category.type}-${category.name}`}
+                      value={category.name.toLowerCase()}
+                    >
+                      {filters.type === "all"
+                        ? `${category.name} (${category.type})`
+                        : category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
