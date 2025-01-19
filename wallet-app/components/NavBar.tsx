@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItemsList = [
   { label: "Dashboard", link: "/" },
+  { label: "Accounts", link: "/accounts" },
+  { label: "Budgets", link: "/budgets" },
   { label: "Transactions", link: "/transactions" },
   { label: "Manage", link: "/manage" },
 ];
@@ -30,9 +32,9 @@ export default function NavBar() {
 
 function DesktopNavBar() {
   return (
-    <div className="hidden border-separate border-b bg-background md:block w-full">
+    <div className="hidden border-separate bg-background md:block w-full">
       <nav className="container flex justify-between items-center px-8">
-        <div className="flex min-h-[60px] items-center gap-x-6 px-2">
+        <div className="flex min-h-[75px] items-center gap-x-6 px-2 pl-1 sm:pl-12">
           <Logo />
           <div className="flex h-full">
             {navItemsList.map((item) => (
@@ -81,7 +83,7 @@ function NavbarItem({ label, link }: { label: string; link: string }) {
         {label}
       </Link>
       {isActive && (
-        <div className="absolute -bottom-[2px] left-1/2 hidden w-[80%] h-[2px] -translate-x-12 rounded-xl bg-foreground md:block" />
+        <div className="absolute -bottom-[0.5px] left-1/2 hidden w-[75%] h-[3px] -translate-x-12 rounded-xl bg-amber-600 md:block" />
       )}
     </div>
   );

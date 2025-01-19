@@ -1,182 +1,212 @@
-import React from "react";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import UserSettings from "@/models/UserSettings";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, ArrowUpRight, ArrowDownRight, CreditCard } from "lucide-react";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
+import { WelcomeStats } from "./_components/WelcomeStats";
+import RecentTransactions from "./_components/RecentTransactions";
 import SpendingOverview from "./_components/SpendingOverview";
+import { useUser } from "@clerk/nextjs";
+import AccountCard from "@/components/AccountCard";
+import BudgetCard from "@/components/BudgetCard";
+import { toast } from "sonner";
+import DashboardLoading from "./_components/Loading";
 
-export default async function DashboardPage() {
-  const user = await currentUser();
+interface DashboardStats {
+  income: number;
+  expense: number;
+  balance: number;
+  accountsCount: number;
+  transactionsCount: number;
+  budgetsCount: number;
+}
 
-  if (!user) {
-    redirect("/sign-in");
-  }
+interface Account {
+  _id: string;
+  name: string;
+  type: string;
+  balance: number;
+  currency: string;
+  createdAt: string;
+}
 
-  const userSettings = await UserSettings.findOne({
-    userId: user.id,
+interface Budget {
+  _id: string;
+  name: string;
+  amount: number;
+  currentAmount: number;
+  period: "monthly" | "weekly" | "yearly";
+  startDate: string;
+  endDate: string;
+}
+
+interface Transaction {
+  _id: string;
+  type: "income" | "expense";
+  amount: number;
+  description: string;
+  date: string;
+  category: {
+    name: string;
+    type: string;
+  };
+  accountId: {
+    _id: string;
+    name: string;
+  };
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const { user, isLoaded: userLoaded, isSignedIn } = useUser();
+  const [stats, setStats] = useState<DashboardStats>({
+    income: 0,
+    expense: 0,
+    balance: 0,
+    accountsCount: 0,
+    transactionsCount: 0,
+    budgetsCount: 0,
   });
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
+    []
+  );
+  const [recentAccounts, setRecentAccounts] = useState<Account[]>([]);
+  const [recentBudgets, setRecentBudgets] = useState<Budget[]>([]);
+  const [spendingData, setSpendingData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("6m");
 
-  if (!userSettings?.currency) {
-    redirect("/wizard");
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!isSignedIn) return;
+
+      try {
+        setIsLoading(true);
+        const [
+          statsRes,
+          transactionsRes,
+          accountsRes,
+          budgetsRes,
+          spendingRes,
+        ] = await Promise.all([
+          fetch("/api/stats"),
+          fetch("/api/transactions?limit=5"),
+          fetch("/api/accounts?limit=3"),
+          fetch("/api/budgets?limit=3"),
+          fetch(`/api/reports/monthly?timeframe=${selectedTimeframe}`),
+        ]);
+
+        if (
+          !statsRes.ok ||
+          !transactionsRes.ok ||
+          !accountsRes.ok ||
+          !budgetsRes.ok ||
+          !spendingRes.ok
+        ) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const [
+          statsData,
+          transactionsData,
+          accountsData,
+          budgetsData,
+          spendingData,
+        ] = await Promise.all([
+          statsRes.json(),
+          transactionsRes.json(),
+          accountsRes.json(),
+          budgetsRes.json(),
+          spendingRes.json(),
+        ]);
+
+        setStats(statsData);
+        setRecentTransactions(transactionsData);
+        setRecentAccounts(accountsData);
+        setRecentBudgets(budgetsData);
+        setSpendingData(spendingData);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (userLoaded && isSignedIn) {
+      fetchDashboardData();
+    }
+  }, [userLoaded, isSignedIn, selectedTimeframe]);
+
+  if (!userLoaded || isLoading) {
+    return <DashboardLoading />;
   }
 
-  const accounts = [
-    {
-      id: 1,
-      name: "Main Account",
-      balance: 5240.5,
-      currency: userSettings.currency,
-      cardNumber: "**** **** **** 4242",
-      expiryDate: "12/25",
-    },
-    {
-      id: 2,
-      name: "Savings",
-      balance: 12350.75,
-      currency: userSettings.currency,
-      cardNumber: "**** **** **** 8888",
-      expiryDate: "08/26",
-    },
-  ];
-
-  const transactionData = [
-    { date: "Jan", amount: 4000, previous: 3500 },
-    { date: "Feb", amount: 3000, previous: 2800 },
-    { date: "Mar", amount: 5000, previous: 4200 },
-    { date: "Apr", amount: 4600, previous: 4000 },
-    { date: "May", amount: 6000, previous: 5200 },
-    { date: "Jun", amount: 5400, previous: 4800 },
-  ];
-
-  const recentTransactions = [
-    { id: 1, name: "Grocery Store", amount: -85.5, date: "Today" },
-    { id: 2, name: "Salary Deposit", amount: 3200.0, date: "Yesterday" },
-    { id: 3, name: "Restaurant", amount: -45.75, date: "2 days ago" },
-  ];
+  if (!isSignedIn) return null;
 
   return (
-    <main className="min-h-screen p-6 bg-background">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">
-          Welcome back, {user.firstName}! 👋
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Here's your financial overview
-        </p>
-      </div>
+    <main className="min-h-screen pt-20 px-4 sm:px-6 my-10 flex flex-col items-center">
+      {/* Welcome Section with Stats */}
+      <section className="w-full max-w-7xl mb-12">
+        <WelcomeStats
+          stats={stats}
+          userName={user?.firstName || ""}
+          currency={(user?.publicMetadata?.currency as string) || "USD"}
+        />
+      </section>
 
-      {/* Account Cards */}
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        {accounts.map((account) => (
-          <Card
-            key={account.id}
-            className="relative overflow-hidden bg-gradient-to-br from-primary/90 to-primary group hover:shadow-lg transition-all duration-300"
+      {/* Recent Accounts Section */}
+      <section className="w-full max-w-7xl mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Recent Accounts</h2>
+          <button
+            onClick={() => router.push("/accounts")}
+            className="text-amber-600 hover:text-amber-700 font-medium"
           >
-            <CardContent className="p-6">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/20 rounded-full -ml-16 -mb-16" />
+            View All
+          </button>
+        </div>
+        <AccountCard
+          data={recentAccounts.slice(0, 3)}
+          onAccountAdded={(newAccount) => {
+            setRecentAccounts((prev) => [...prev, newAccount].slice(0, 3));
+          }}
+        />
+      </section>
 
-              <div className="relative">
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <h3 className="font-medium text-primary-foreground">
-                      {account.name}
-                    </h3>
-                    <p className="text-3xl font-bold mt-2 text-primary-foreground">
-                      {new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: account.currency,
-                      }).format(account.balance)}
-                    </p>
-                  </div>
-                  <CreditCard className="h-8 w-8 text-primary-foreground/80" />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="font-mono text-lg text-primary-foreground/90">
-                    {account.cardNumber}
-                  </p>
-                  <p className="text-sm text-primary-foreground/80">
-                    Valid thru: {account.expiryDate}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Add Account Card */}
-        <Card className="border-2 border-dashed border-muted hover:border-primary cursor-pointer transition-all group">
-          <CardContent className="p-6 flex items-center justify-center h-full">
-            <div className="text-center">
-              <Plus className="h-8 w-8 text-muted-foreground group-hover:text-primary mx-auto mb-2 transition-colors" />
-              <p className="text-muted-foreground group-hover:text-primary transition-colors">
-                Add Account
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Recent Budgets Section */}
+      <section className="w-full max-w-7xl mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Recent Budgets</h2>
+          <button
+            onClick={() => router.push("/budgets")}
+            className="text-amber-600 hover:text-amber-700 font-medium"
+          >
+            View All
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {recentBudgets.map((budget) => (
+            <BudgetCard
+              key={budget._id}
+              budget={budget}
+              onDelete={async () => {
+                // Handle delete logic
+              }}
+            />
+          ))}
+        </div>
+      </section>
 
       {/* Spending Overview and Recent Transactions */}
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <SpendingOverview data={transactionData} />
-
-        {/* Recent Transactions */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="font-medium text-foreground mb-4">
-              Recent Transactions
-            </h3>
-            <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between py-2"
-                >
-                  <div className="flex items-center gap-3">
-                    {transaction.amount > 0 ? (
-                      <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <ArrowUpRight className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                        <ArrowDownRight className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {transaction.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {transaction.date}
-                      </p>
-                    </div>
-                  </div>
-                  <p
-                    className={`font-medium ${
-                      transaction.amount > 0
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: userSettings.currency,
-                    }).format(Math.abs(transaction.amount))}
-                  </p>
-                </div>
-              ))}
-
-              <button className="w-full mt-4 py-2 text-center text-primary font-medium hover:text-primary/80 transition-colors">
-                View All Transactions
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <section className="w-full max-w-7xl grid md:grid-cols-2 gap-6 mb-12">
+        <SpendingOverview
+          data={spendingData}
+          onTimeframeChange={setSelectedTimeframe}
+        />
+        <RecentTransactions data={recentTransactions} />
+      </section>
     </main>
   );
 }

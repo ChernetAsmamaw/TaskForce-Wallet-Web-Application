@@ -6,10 +6,6 @@ const monthlyReportSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    day: {
-      type: Number,
-      required: true,
-    },
     month: {
       type: Number,
       required: true,
@@ -20,13 +16,14 @@ const monthlyReportSchema = new mongoose.Schema(
     },
     totalIncome: Number,
     totalExpense: Number,
-    categoryBreakdown: [
+    budgetBreakdown: [
       {
-        categoryId: {
+        budgetId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Category",
+          ref: "Budget",
         },
-        amount: Number,
+        spent: Number,
+        remaining: Number,
       },
     ],
     accountBreakdown: [
@@ -36,16 +33,17 @@ const monthlyReportSchema = new mongoose.Schema(
           ref: "Account",
         },
         balance: Number,
+        transactions: {
+          income: Number,
+          expense: Number,
+        },
       },
     ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Create a model using the schema
-const MonthlyReport = mongoose.model("MonthlyReport", monthlyReportSchema);
-
-// Export the model
+const MonthlyReport =
+  mongoose.models.MonthlyReport ||
+  mongoose.model("MonthlyReport", monthlyReportSchema);
 export default MonthlyReport;

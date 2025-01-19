@@ -19,13 +19,19 @@ const accountSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    currency: String,
+
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-// Create a model using the schema
-const Account = mongoose.model("Account", accountSchema);
+// Delete mongoose model if it exists
+if (mongoose.models.Account) {
+  delete mongoose.models.Account;
+}
 
-// Export the model
+const Account = mongoose.model("Account", accountSchema);
 export default Account;
