@@ -50,7 +50,6 @@ interface Account {
 
 interface AccountCardProps {
   data: Account[];
-  onAccountAdded: (account: Account) => void;
 }
 
 const getAccountDetails = (type = "bank") => {
@@ -80,12 +79,13 @@ const getAccountDetails = (type = "bank") => {
 };
 
 const AccountCard = ({ data = [], onAccountAdded }: AccountCardProps) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+const AccountCard = ({ data = [] }: AccountCardProps) => {
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
   const [accounts, setAccounts] = useState(data);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [userCurrencyInfo, setUserCurrencyInfo] = useState(Currencies[0]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserSettings = async () => {
@@ -357,7 +357,7 @@ const AccountCard = ({ data = [], onAccountAdded }: AccountCardProps) => {
         {/* Add New Card */}
         <AddAccount
           onAccountAdded={(newAccount) =>
-            setAccounts([...accounts, newAccount])
+            setAccounts([...accounts, newAccount as Account])
           }
           userCurrency={userCurrencyInfo.value}
         />

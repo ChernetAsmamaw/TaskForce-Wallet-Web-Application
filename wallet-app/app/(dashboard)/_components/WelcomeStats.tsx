@@ -46,8 +46,8 @@ export function WelcomeStats({ stats, userName }: WelcomeStatsProps) {
             setCurrencyInfo(foundCurrency);
           }
         }
-      } catch (error) {
-        console.error("Error fetching user settings:", error);
+      } catch {
+        console.error("Error fetching user settings:", Error);
       }
     };
 
@@ -62,7 +62,7 @@ export function WelcomeStats({ stats, userName }: WelcomeStatsProps) {
         currency: currencyInfo.value.toUpperCase(),
         maximumFractionDigits: 0,
       }).format(amount);
-    } catch (error) {
+    } catch {
       // Fallback to basic formatting if Intl.NumberFormat fails
       return `${currencyInfo.symbol}${amount.toLocaleString()}`;
     }

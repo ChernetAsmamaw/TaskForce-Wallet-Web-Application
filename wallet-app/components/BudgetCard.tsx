@@ -149,7 +149,7 @@ const BudgetCard = ({
         day: "numeric",
         year: "numeric",
       });
-    } catch (error) {
+    } catch {
       return "Invalid Date";
     }
   };

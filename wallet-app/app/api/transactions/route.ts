@@ -15,7 +15,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     // Build query object
-    let query: any = { userId: user.id };
+    const query: {
+      userId: string;
+      type?: string;
+      accountId?: mongoose.Types.ObjectId;
+      budgetId?: mongoose.Types.ObjectId;
+      date?: { $gte?: Date; $lte?: Date };
+    } = { userId: user.id };
 
     // Transaction type filter
     const type = searchParams.get("type");

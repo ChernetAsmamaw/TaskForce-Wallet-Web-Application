@@ -27,7 +27,14 @@ interface Account {
 interface AddBudgetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onBudgetAdded: (budget: any) => void;
+  onBudgetAdded: (budget: {
+    name: string;
+    maxAmount: number;
+    startDate: string;
+    endDate: string;
+    accountId: string;
+    period: "monthly" | "weekly" | "yearly";
+  }) => void;
 }
 
 const AddBudgetDialog = ({

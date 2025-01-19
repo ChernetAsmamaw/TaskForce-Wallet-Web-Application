@@ -25,13 +25,6 @@ const UserSettingsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const languages = [
-    { code: "en", name: "English" },
-    { code: "es", name: "Spanish" },
-    { code: "fr", name: "French" },
-    { code: "de", name: "German" },
-  ];
-
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -40,7 +33,7 @@ const UserSettingsPage = () => {
         const data = await response.json();
         setSettings(data);
         setError(null);
-      } catch (error) {
+      } catch {
         setError("Unable to load settings. Please try again later.");
       } finally {
         setIsLoading(false);
@@ -66,7 +59,7 @@ const UserSettingsPage = () => {
 
       setSuccessMessage("Settings updated successfully");
       setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
+    } catch {
       setError("Failed to update settings. Please try again.");
     }
   };

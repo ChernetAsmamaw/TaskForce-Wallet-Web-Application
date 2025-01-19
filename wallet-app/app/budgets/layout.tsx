@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React from "react";
 
 function layout({ children }: { children: React.ReactNode }) {
   return (

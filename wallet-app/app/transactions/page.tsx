@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Filter,
-  Download,
-  Plus,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Filter, Download } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +88,7 @@ const TransactionsPage = () => {
       // Add time period filter
       if (filters.timePeriod !== "all-time") {
         const now = new Date();
-        let startDate = new Date();
+        const startDate = new Date();
 
         switch (filters.timePeriod) {
           case "today":

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import UserSettings from "@/models/UserSettings";
 import dbConnect from "@/utils/db";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await dbConnect();
     const user = await currentUser();

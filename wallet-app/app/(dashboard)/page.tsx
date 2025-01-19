@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
 import { WelcomeStats } from "./_components/WelcomeStats";
 import RecentTransactions from "./_components/RecentTransactions";
 import SpendingOverview from "./_components/SpendingOverview";
@@ -149,11 +148,7 @@ export default function DashboardPage() {
     <main className="min-h-screen pt-20 px-4 sm:px-6 my-10 flex flex-col items-center">
       {/* Welcome Section with Stats */}
       <section className="w-full max-w-7xl mb-12">
-        <WelcomeStats
-          stats={stats}
-          userName={user?.firstName || ""}
-          currency={(user?.publicMetadata?.currency as string) || "USD"}
-        />
+        <WelcomeStats stats={stats} userName={user?.firstName || ""} />
       </section>
 
       {/* Recent Accounts Section */}
