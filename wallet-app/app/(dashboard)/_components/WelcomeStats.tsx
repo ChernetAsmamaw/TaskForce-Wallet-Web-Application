@@ -88,7 +88,7 @@ export function WelcomeStats({ stats, userName }: WelcomeStatsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          Here's your financial overview for{" "}
+          Here&apos;s your financial overview for{" "}
           {new Date().toLocaleDateString(currencyInfo.locale, {
             month: "long",
             year: "numeric",
