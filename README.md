@@ -144,13 +144,6 @@ walletapp/
 - MongoDB session management for safe transactions
 - Input validation
 
-## 🎯 Planned Enhancements
-
-- [ ] Budget tracking and notifications
-- [ ] Multiple account support (bank, mobile money, cash)
-- [ ] Transaction report visualization
-- [ ] Bulk transaction import
-
 ## 👥 Author
 
 - Chernet Asmamaw - Initial work - [Github](https://github.com/ChernetAsmamaw)
