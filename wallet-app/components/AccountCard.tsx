@@ -37,7 +37,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Currencies from "@/lib/Currencies";
-import { toast } from "sonner";
 
 interface Account {
   _id: string;
@@ -78,14 +77,15 @@ const getAccountDetails = (type = "bank") => {
   return details[type as keyof typeof details] || details.other;
 };
 
-const AccountCard = ({ data = [], onAccountAdded }: AccountCardProps) => {
 const AccountCard = ({ data = [] }: AccountCardProps) => {
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
-  const [accounts, setAccounts] = useState(data);
+  const [accounts, setAccounts] = useState<Account[]>(data);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [userCurrencyInfo, setUserCurrencyInfo] = useState(Currencies[0]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userCurrencyInfo, setUserCurrencyInfo] = useState(() => {
+    return Currencies.find((c) => c.value === "USD") || Currencies[0];
+  });
 
   useEffect(() => {
     const fetchUserSettings = async () => {
@@ -93,11 +93,13 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
         const response = await fetch("/api/user-settings");
         if (response.ok) {
           const settings = await response.json();
-          const foundCurrency = Currencies.find(
-            (c) => c.value.toLowerCase() === settings.currency?.toLowerCase()
-          );
-          if (foundCurrency) {
-            setUserCurrencyInfo(foundCurrency);
+          if (settings.currency) {
+            const foundCurrency = Currencies.find(
+              (c) => c.value === settings.currency
+            );
+            if (foundCurrency) {
+              setUserCurrencyInfo(foundCurrency);
+            }
           }
         }
       } catch (error) {
@@ -113,10 +115,10 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
   }, [data]);
 
   const formatWithSymbol = (amount: number, currencyCode: string) => {
+    const uppercaseCurrency =
+      currencyCode?.toUpperCase() || userCurrencyInfo.value;
     const currencyInfo =
-      Currencies.find(
-        (c) => c.value.toLowerCase() === currencyCode.toLowerCase()
-      ) || userCurrencyInfo;
+      Currencies.find((c) => c.value === uppercaseCurrency) || userCurrencyInfo;
 
     try {
       const formattedNumber = amount.toLocaleString(currencyInfo.locale, {
@@ -124,9 +126,20 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
         maximumFractionDigits: 2,
       });
       return `${currencyInfo.symbol} ${formattedNumber}`;
-    } catch (error) {
+    } catch {
       return `${currencyInfo.symbol} ${amount.toFixed(2)}`;
     }
+  };
+
+  const handleEditClick = (account: Account) => {
+    setEditAccount({
+      ...account,
+      name: account.name || "",
+      type: account.type || "bank",
+      balance: account.balance || 0,
+      currency: account.currency?.toUpperCase() || userCurrencyInfo.value,
+    });
+    setIsEditOpen(true);
   };
 
   const handleAccountUpdate = async (updatedData: Partial<Account>) => {
@@ -136,7 +149,11 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
       const response = await fetch("/api/accounts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id: editAccount._id, ...updatedData }),
+        body: JSON.stringify({
+          _id: editAccount._id,
+          ...updatedData,
+          currency: updatedData.currency?.toUpperCase(),
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to update account");
@@ -176,11 +193,28 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
     }
   };
 
+  const handleInputChange = (
+    key: keyof Account,
+    value: string | number,
+    prev: Account | null
+  ) => {
+    if (!prev) return null;
+    const updates = { ...prev };
+
+    if (key === "balance") {
+      updates[key] = parseFloat(value as string) || 0;
+    } else {
+      updates[key] = value as any;
+    }
+
+    return updates;
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-16 p-4 w-full max-w-screen-2xl">
         {accounts.map((account, index) => {
-          const { icon, color, label } = getAccountDetails(account.type);
+          const { icon, color } = getAccountDetails(account.type);
 
           return (
             <motion.div
@@ -201,10 +235,7 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
                       <span className="text-[16px] flex font-extrabold pb-2">
                         Balance:{" "}
                       </span>
-                      {formatWithSymbol(
-                        account.balance,
-                        account.currency || userCurrencyInfo.value
-                      )}
+                      {formatWithSymbol(account.balance, account.currency)}
                     </p>
                     <p className="text-white pt-4 text-sm">
                       Added on:{" "}
@@ -227,116 +258,119 @@ const AccountCard = ({ data = [] }: AccountCardProps) => {
                           variant="ghost"
                           size="icon"
                           className="text-white/90 hover:text-white"
-                          onClick={() => setEditAccount(account)}
+                          onClick={() => handleEditClick(account)}
                         >
                           <Pencil className="h-5 w-5" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80">
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleAccountUpdate({
-                              name: editAccount?.name,
-                              type: editAccount?.type,
-                              balance: editAccount?.balance,
-                              currency: editAccount?.currency,
-                            });
-                          }}
-                          className="space-y-4"
-                        >
-                          <div className="space-y-2">
-                            <Label>Account Name</Label>
-                            <Input
-                              value={editAccount?.name}
-                              onChange={(e) =>
-                                setEditAccount((prev) =>
-                                  prev
-                                    ? { ...prev, name: e.target.value }
-                                    : null
-                                )
-                              }
-                              required
-                            />
-                          </div>
+                        {editAccount && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleAccountUpdate({
+                                name: editAccount.name,
+                                type: editAccount.type,
+                                balance: editAccount.balance,
+                                currency: editAccount.currency,
+                              });
+                            }}
+                            className="space-y-4"
+                          >
+                            <div className="space-y-2">
+                              <Label>Account Name</Label>
+                              <Input
+                                value={editAccount.name}
+                                onChange={(e) =>
+                                  setEditAccount((prev) =>
+                                    handleInputChange(
+                                      "name",
+                                      e.target.value,
+                                      prev
+                                    )
+                                  )
+                                }
+                                required
+                              />
+                            </div>
 
-                          <div className="space-y-2">
-                            <Label>Account Type</Label>
-                            <Select
-                              value={editAccount?.type}
-                              onValueChange={(value) =>
-                                setEditAccount((prev) =>
-                                  prev ? { ...prev, type: value } : null
-                                )
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="bank">
-                                  Bank Account
-                                </SelectItem>
-                                <SelectItem value="cash">Cash</SelectItem>
-                                <SelectItem value="mobile_money">
-                                  Mobile Money
-                                </SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Balance</Label>
-                            <Input
-                              type="number"
-                              value={editAccount?.balance}
-                              onChange={(e) =>
-                                setEditAccount((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        balance: parseFloat(e.target.value),
-                                      }
-                                    : null
-                                )
-                              }
-                              required
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Select
-                              value={
-                                editAccount?.currency || userCurrencyInfo.value
-                              }
-                              onValueChange={(value) =>
-                                setEditAccount((prev) =>
-                                  prev ? { ...prev, currency: value } : null
-                                )
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select currency" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Currencies.map((currency) => (
-                                  <SelectItem
-                                    key={currency.value}
-                                    value={currency.value}
-                                  >
-                                    {currency.symbol} - {currency.label}
+                            <div className="space-y-2">
+                              <Label>Account Type</Label>
+                              <Select
+                                value={editAccount.type}
+                                onValueChange={(value) =>
+                                  setEditAccount((prev) =>
+                                    handleInputChange("type", value, prev)
+                                  )
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="bank">
+                                    Bank Account
                                   </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="mobile_money">
+                                    Mobile Money
+                                  </SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                          <Button type="submit" className="w-full">
-                            Update Account
-                          </Button>
-                        </form>
+                            <div className="space-y-2">
+                              <Label>Balance</Label>
+                              <Input
+                                type="number"
+                                value={editAccount.balance}
+                                onChange={(e) =>
+                                  setEditAccount((prev) =>
+                                    handleInputChange(
+                                      "balance",
+                                      e.target.value,
+                                      prev
+                                    )
+                                  )
+                                }
+                                required
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Currency</Label>
+                              <Select
+                                value={
+                                  editAccount.currency || userCurrencyInfo.value
+                                }
+                                onValueChange={(value) =>
+                                  setEditAccount((prev) =>
+                                    handleInputChange("currency", value, prev)
+                                  )
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Currencies.map((currency) => (
+                                    <SelectItem
+                                      key={currency.value}
+                                      value={currency.value}
+                                    >
+                                      {currency.symbol} - {currency.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <Button type="submit" className="w-full">
+                              Update Account
+                            </Button>
+                          </form>
+                        )}
                       </PopoverContent>
                     </Popover>
                     <Button
