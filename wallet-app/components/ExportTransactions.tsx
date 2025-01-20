@@ -180,11 +180,11 @@ const ExportTransactionsDialog: React.FC<ExportTransactionsDialogProps> = ({
             The exported file will include:
           </p>
           <ul className="list-disc ml-6 mt-2 text-sm text-gray-500 dark:text-gray-400">
-            <li>Transaction date with proper formatting</li>
-            <li>Transaction type with proper casing</li>
-            <li>Description with fallback for empty values</li>
+            <li>Transaction date</li>
+            <li>Transaction type</li>
+            <li>Description </li>
             <li>Category and subcategory (if available)</li>
-            <li>Amount with currency formatting</li>
+            <li>Amount within the currency</li>
             <li>Summary section with totals</li>
           </ul>
         </div>
