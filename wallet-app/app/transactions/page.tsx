@@ -82,7 +82,14 @@ const TransactionsPage = () => {
 
       // Add category filter
       if (filters.category !== "all") {
-        queryParams.append("category", filters.category);
+        // Find the original category with proper casing
+        const selectedCategory = getAvailableCategories().find(
+          (cat) => cat.name.toLowerCase() === filters.category
+        )?.name;
+
+        if (selectedCategory) {
+          queryParams.append("category.name", selectedCategory);
+        }
       }
 
       // Add time period filter

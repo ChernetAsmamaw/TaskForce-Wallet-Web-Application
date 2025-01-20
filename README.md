@@ -26,22 +26,9 @@ WalletApp is a financial tracking application built for users to manage their pe
 ### 🎯 Categories System
 
 - Predefined expense categories:
-  - Housing
-  - Transportation
-  - Food
-  - Utilities
-  - Insurance
-  - Healthcare
-  - Savings
-  - Personal
-  - Entertainment
-  - Other
+  - Housing, Transportation, Food, Utilities, Insurance, Healthcare, Savings, Personal, Entertainment, Other
 - Income categories:
-  - Salary
-  - Freelance
-  - Investments
-  - Rental
-  - Other
+  - Salary, Freelance, Investments, Rental, Other
 - Support for subcategories within each main category
 
 ### 📱 User Interface
@@ -116,6 +103,7 @@ http://localhost:3000
 - **Authentication**: Clerk with custom sign-in/sign-up flows
 - **Database**: MongoDB with Mongoose
 - **API**: Next.js API Routes with transaction management
+- **Deployment**: Vercel app can be found at wallet.chernet.dev
 
 ## 📱 Application Structure
 
@@ -130,7 +118,9 @@ walletapp/
 ├── components/
 │   ├── ExportTransactionsDialog.tsx
 │   ├── AddTransaction.tsx
-│   └── NavBar.tsx
+│   |── NavBar.tsx
+|── └── Providers/
+|       └── RootProviders.tsx
 ├── models/
 │   └── Transaction.ts      # Mongoose transaction model
 └── utils/

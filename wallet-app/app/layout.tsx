@@ -10,6 +10,7 @@ import {
 } from "@clerk/nextjs";
 import RootProviders from "@/components/providers/RootProviders";
 import { Toaster } from "sonner";
+import { DataProvider } from "@/components/providers/DataProvider";
 
 const poppins = Poppins({
   weight: "400",

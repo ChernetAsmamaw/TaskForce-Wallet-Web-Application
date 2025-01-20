@@ -15,18 +15,18 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     // Build query object
-    const query: {
-      userId: string;
-      type?: string;
-      accountId?: mongoose.Types.ObjectId;
-      budgetId?: mongoose.Types.ObjectId;
-      date?: { $gte?: Date; $lte?: Date };
-    } = { userId: user.id };
+    const query: any = { userId: user.id };
 
     // Transaction type filter
     const type = searchParams.get("type");
     if (type && type !== "all") {
       query.type = type;
+    }
+
+    // Category filter
+    const categoryName = searchParams.get("category.name");
+    if (categoryName) {
+      query["category.name"] = categoryName;
     }
 
     // Account filter
@@ -53,6 +53,8 @@ export async function GET(request: Request) {
         query.date.$lte = new Date(endDate);
       }
     }
+
+    console.log("Query:", query); // For debugging
 
     // Execute query with population and sorting
     const transactions = await Transaction.find(query)
