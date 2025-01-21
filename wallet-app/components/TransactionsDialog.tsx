@@ -136,9 +136,9 @@ const TransactionsDialog: React.FC<TransactionsDialogProps> = ({
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {transaction.type === "income" ? "+" : "-"}
                     <CurrencyFormatter
-                      amount={Math.abs(transaction.amount).toFixed(2)}
+                      amount={Math.abs(transaction.amount)} // Keep as number
+                      type={transaction.type}
                       className="text-lg font-semibold"
                     />
                   </p>

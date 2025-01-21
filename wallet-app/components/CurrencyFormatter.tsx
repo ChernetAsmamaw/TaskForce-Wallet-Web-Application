@@ -36,13 +36,23 @@ export const useCurrencyFormatter = () => {
     options = { maximumFractionDigits: 2 }
   ) => {
     try {
+      // Ensure amount is a number
+      const numericAmount =
+        typeof amount === "string" ? parseFloat(amount) : amount;
+
+      if (isNaN(numericAmount)) {
+        console.error("Invalid amount provided to formatCurrency:", amount);
+        return `${currencyInfo.symbol}0.00`;
+      }
+
       return new Intl.NumberFormat(currencyInfo.locale, {
         style: "currency",
         currency: currencyInfo.value.toUpperCase(),
         ...options,
-      }).format(amount);
-    } catch {
-      return `${currencyInfo.symbol}${amount.toFixed(
+      }).format(numericAmount);
+    } catch (error) {
+      console.error("Error formatting currency:", error);
+      return `${currencyInfo.symbol}${Number(amount).toFixed(
         options.maximumFractionDigits
       )}`;
     }
@@ -51,16 +61,20 @@ export const useCurrencyFormatter = () => {
   return { formatCurrency, currencyInfo };
 };
 
+interface CurrencyFormatterProps {
+  amount: number;
+  type?: "income" | "expense" | "default";
+  className?: string;
+  options?: Intl.NumberFormatOptions;
+}
+
 // Currency formatter component
 const CurrencyFormatter = ({
   amount,
   type = "default",
   className = "",
-}: {
-  amount: number;
-  type?: "income" | "expense" | "default";
-  className?: string;
-}) => {
+  options = { maximumFractionDigits: 2 },
+}: CurrencyFormatterProps) => {
   const { formatCurrency } = useCurrencyFormatter();
 
   const getPrefix = () => {
@@ -74,10 +88,15 @@ const CurrencyFormatter = ({
     }
   };
 
+  // Ensure amount is treated as a number and handle invalid values
+  const numericAmount =
+    typeof amount === "string" ? parseFloat(amount) : amount;
+  const validAmount = isNaN(numericAmount) ? 0 : numericAmount;
+
   return (
     <span className={className}>
       {getPrefix()}
-      {formatCurrency(Math.abs(amount))}
+      {formatCurrency(Math.abs(validAmount), options)}
     </span>
   );
 };
