@@ -41,7 +41,7 @@ export default function BudgetsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userCurrency, setUserCurrency] = useState("usd");
   const router = useRouter();
 
@@ -60,36 +60,46 @@ export default function BudgetsPage() {
     "December",
   ];
 
-  // Fetch user settings to get currency
-  useEffect(() => {
-    const fetchUserSettings = async () => {
-      try {
-        const response = await fetch("/api/user-settings");
-        if (response.ok) {
-          const settings = await response.json();
-          setUserCurrency(settings.currency || "usd");
-        }
-      } catch (error) {
-        console.error("Error fetching user settings:", error);
+  const fetchUserSettings = async (retryCount = 2) => {
+    try {
+      const response = await fetch("/api/user-settings", {
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const settings = await response.json();
+        setUserCurrency(settings.currency || "usd");
+      } else if (retryCount > 0) {
+        // Retry with a delay
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await fetchUserSettings(retryCount - 1);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+    }
+  };
 
-    fetchUserSettings();
-  }, []);
-
-  const fetchBudgets = async () => {
+  const fetchBudgets = async (retryCount = 2) => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/budgets?month=${currentMonth}&year=${currentYear}`
+        `/api/budgets?month=${currentMonth}&year=${currentYear}`,
+        { cache: "no-store" }
       );
+
       if (!response.ok) {
         if (response.status === 401) {
           router.push("/sign-in");
           return;
         }
+
+        if (retryCount > 0) {
+          // Retry with a delay
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return fetchBudgets(retryCount - 1);
+        }
         throw new Error("Failed to fetch budgets");
       }
+
       const data = await response.json();
       setBudgets(data);
     } catch (error) {
@@ -100,6 +110,17 @@ export default function BudgetsPage() {
     }
   };
 
+  // Initialize data with a small delay
+  useEffect(() => {
+    const initializeData = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await Promise.all([fetchUserSettings(), fetchBudgets()]);
+    };
+
+    initializeData();
+  }, []);
+
+  // Fetch budgets when month/year changes
   useEffect(() => {
     fetchBudgets();
   }, [currentMonth, currentYear]);
@@ -136,7 +157,7 @@ export default function BudgetsPage() {
     } catch (error) {
       console.error("Error deleting budget:", error);
       toast.error("Failed to delete budget");
-      throw error; // Propagate error to BudgetCard component
+      throw error;
     }
   };
 
