@@ -14,6 +14,7 @@ import {
 import AddTransaction from "@/components/AddTransaction";
 import ExportTransactionsDialog from "@/components/ExportTransactions";
 import { toast } from "sonner";
+import CurrencyFormatter from "@/components/CurrencyFormatter";
 
 // Predefined categories based on your TransactionModel
 const EXPENSE_CATEGORIES = [
@@ -291,17 +292,15 @@ const TransactionsPage = () => {
                           </p>
                         </div>
                       </div>
-                      <p
-                        className={
-                          "font-semibold text-lg " +
-                          (transaction.type === "income"
+                      <CurrencyFormatter
+                        amount={transaction.amount}
+                        type={transaction.type}
+                        className={`font-semibold text-lg ${
+                          transaction.type === "income"
                             ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400")
-                        }
-                      >
-                        {transaction.type === "income" ? "+" : "-"}$
-                        {Math.abs(transaction.amount || 0).toFixed(2)}
-                      </p>
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
                     </div>
                   ))}
                 </div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import CurrencyFormatter from "@/components/CurrencyFormatter";
 
 interface Transaction {
   _id: string;
@@ -95,19 +96,15 @@ export default function RecentTransactions({ data }: RecentTransactionsProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p
+                <CurrencyFormatter
+                  amount={transaction.amount}
+                  type={transaction.type}
                   className={`font-semibold ${
                     transaction.type === "income"
                       ? "text-green-600 dark:text-green-400"
                       : "text-red-600 dark:text-red-400"
                   }`}
-                >
-                  {transaction.type === "income" ? "+" : "-"}
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(Math.abs(transaction.amount))}
-                </p>
+                />
                 <p className="text-sm text-muted-foreground">
                   {formatDate(transaction.date)}
                 </p>

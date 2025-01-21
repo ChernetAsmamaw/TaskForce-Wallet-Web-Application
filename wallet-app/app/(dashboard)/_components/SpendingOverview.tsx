@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useCurrencyFormatter } from "@/components/CurrencyFormatter";
 
 interface SpendingOverviewProps {
   data: Array<{
@@ -21,6 +22,8 @@ interface SpendingOverviewProps {
 }
 
 export default function SpendingOverview({ data }: SpendingOverviewProps) {
+  const { formatCurrency, currencyInfo } = useCurrencyFormatter();
+
   return (
     <Card className="w-full transition-all duration-200 hover:shadow-lg">
       <CardContent className="p-6">
@@ -59,7 +62,9 @@ export default function SpendingOverview({ data }: SpendingOverviewProps) {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) =>
+                  formatCurrency(value, { maximumFractionDigits: 0 })
+                }
               />
               <Tooltip
                 contentStyle={{
@@ -68,7 +73,7 @@ export default function SpendingOverview({ data }: SpendingOverviewProps) {
                   borderRadius: "0.5rem",
                   padding: "1rem",
                 }}
-                formatter={(value) => [`$${value}`, "Amount"]}
+                formatter={(value: number) => [formatCurrency(value), "Amount"]}
               />
               <Line
                 type="monotone"

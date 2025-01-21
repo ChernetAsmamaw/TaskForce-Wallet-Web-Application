@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TransactionsDialog from "./TransactionsDialog";
 import UpdateBudgetDialog from "./UpdateBudget";
-import Currencies from "@/lib/Currencies";
+import CurrencyFormatter from "@/components/CurrencyFormatter";
 
 interface Budget {
   _id: string;
@@ -59,30 +59,6 @@ const BudgetCard = ({
   const [showTransactions, setShowTransactions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [lastWarningLevel, setLastWarningLevel] = useState(0);
-
-  // Format currency based on user settings
-  const formatCurrency = (amount: number) => {
-    const currencyInfo = Currencies.find(
-      (c) => c.value === currency.toLowerCase()
-    ) ||
-      Currencies.find((c) => c.value === "usd") || {
-        value: "usd",
-        label: "US Dollar",
-        locale: "en-US",
-        symbol: "$",
-      };
-
-    try {
-      return new Intl.NumberFormat(currencyInfo.locale, {
-        style: "currency",
-        currency: currencyInfo.value.toUpperCase(),
-        maximumFractionDigits: 2,
-      }).format(amount);
-    } catch (error) {
-      console.error("Currency formatting error:", error);
-      return `${currencyInfo.symbol}${amount.toFixed(2)}`;
-    }
-  };
 
   // Safely access budget properties with fallbacks
   const safeAmount = budget?.amount || 0;
@@ -208,14 +184,17 @@ const BudgetCard = ({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400">Spent</p>
-          <p className="text-lg font-semibold">
-            {" "}
-            {formatCurrency(safeCurrentAmount)}
-          </p>
+          <CurrencyFormatter
+            amount={safeCurrentAmount}
+            className="text-lg font-semibold"
+          />
         </div>
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400">Budget</p>
-          <p className="text-lg font-semibold"> {formatCurrency(safeAmount)}</p>
+          <CurrencyFormatter
+            amount={safeAmount}
+            className="text-lg font-semibold"
+          />
         </div>
       </div>
 

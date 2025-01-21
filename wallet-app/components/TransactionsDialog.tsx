@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import CurrencyFormatter from "@/components/CurrencyFormatter";
 
 interface Transaction {
   _id: string;
@@ -135,8 +136,11 @@ const TransactionsDialog: React.FC<TransactionsDialogProps> = ({
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {transaction.type === "income" ? "+" : "-"}$
-                    {Math.abs(transaction.amount).toFixed(2)}
+                    {transaction.type === "income" ? "+" : "-"}
+                    <CurrencyFormatter
+                      amount={Math.abs(transaction.amount).toFixed(2)}
+                      className="text-lg font-semibold"
+                    />
                   </p>
                 </div>
               ))
