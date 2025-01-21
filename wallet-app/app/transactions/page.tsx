@@ -16,7 +16,6 @@ import ExportTransactionsDialog from "@/components/ExportTransactions";
 import { toast } from "sonner";
 import CurrencyFormatter from "@/components/CurrencyFormatter";
 
-// Predefined categories based on your TransactionModel
 const EXPENSE_CATEGORIES = [
   "Housing",
   "Transportation",
@@ -69,21 +68,23 @@ const TransactionsPage = () => {
     category: "all",
   });
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (isInitialLoad = false) => {
     try {
+      if (isInitialLoad) {
+        // Small delay on initial load to ensure app is ready
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
       setIsLoading(true);
       setError(null);
 
       const queryParams = new URLSearchParams();
 
-      // Add type filter
       if (filters.type !== "all") {
         queryParams.append("type", filters.type);
       }
 
-      // Add category filter
       if (filters.category !== "all") {
-        // Find the original category with proper casing
         const selectedCategory = getAvailableCategories().find(
           (cat) => cat.name.toLowerCase() === filters.category
         )?.name;
@@ -93,7 +94,6 @@ const TransactionsPage = () => {
         }
       }
 
-      // Add time period filter
       if (filters.timePeriod !== "all-time") {
         const now = new Date();
         const startDate = new Date();
@@ -117,14 +117,37 @@ const TransactionsPage = () => {
         queryParams.append("endDate", now.toISOString());
       }
 
-      const response = await fetch(
-        "/api/transactions?" + queryParams.toString()
-      );
-      if (!response.ok) {
+      try {
+        const response = await fetch(
+          "/api/transactions?" + queryParams.toString(),
+          {
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          // Quick retry if first attempt fails
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const retryResponse = await fetch(
+            "/api/transactions?" + queryParams.toString(),
+            {
+              cache: "no-store",
+            }
+          );
+
+          if (!retryResponse.ok) {
+            throw new Error("Failed to fetch transactions");
+          }
+
+          const data = await retryResponse.json();
+          setTransactions(data);
+        } else {
+          const data = await response.json();
+          setTransactions(data);
+        }
+      } catch (fetchError) {
         throw new Error("Failed to fetch transactions");
       }
-      const data = await response.json();
-      setTransactions(data);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       setError("Failed to load transactions");
@@ -135,14 +158,25 @@ const TransactionsPage = () => {
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, [filters]); // Fetch whenever filters change
+    let isSubscribed = true;
+
+    const loadData = async () => {
+      if (isSubscribed) {
+        await fetchTransactions(true);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [filters]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Get available categories based on transaction type
   const getAvailableCategories = () => {
     if (filters.type === "income") {
       return INCOME_CATEGORIES.map((cat) => ({ type: "income", name: cat }));
@@ -156,12 +190,10 @@ const TransactionsPage = () => {
     ];
   };
 
-  // Helper function to get category name
   const getCategoryName = (transaction: Transaction) => {
     return transaction.category?.name || "Uncategorized";
   };
 
-  // Helper function to get subcategory
   const getSubCategory = (transaction: Transaction) => {
     return transaction.category?.subCategory || "";
   };
@@ -182,7 +214,9 @@ const TransactionsPage = () => {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <AddTransaction onTransactionAdded={fetchTransactions} />
+              <AddTransaction
+                onTransactionAdded={() => fetchTransactions(false)}
+              />
               <ExportTransactionsDialog transactions={transactions} />
             </div>
           </div>
