@@ -38,6 +38,19 @@ WalletApp is a financial tracking application built for users to manage their pe
 - Clear visual distinction between income and expenses using icons and colors
 - Easy-to-use export functionality with preview dialog
 
+## 📸 Screenshots
+![walletapp](https://github.com/user-attachments/assets/99e98370-86d8-42a6-8dda-70cc4d9f4a77)
+![Screenshot 2025-06-29 175351](https://github.com/user-attachments/assets/52b89b14-0d7d-4e6f-83ee-c2f6bfab3fbe)
+![Screenshot 2025-06-29 175422](https://github.com/user-attachments/assets/650c6a32-b86b-40aa-a72b-20d1dca69ab8)
+![Screenshot 2025-06-29 175452](https://github.com/user-attachments/assets/c89b4115-2802-4ebd-9eba-c8c4b5346251)
+![Screenshot 2025-06-29 175548](https://github.com/user-attachments/assets/f59858a0-43c2-4cda-930d-18bc7cfd2566)
+![Screenshot 2025-06-29 175618](https://github.com/user-attachments/assets/e06d7f31-b61f-405f-84ec-b03ec50b5477)
+![Screenshot 2025-06-29 175644](https://github.com/user-attachments/assets/d8a54374-8331-4a71-8816-052bfb373a12)
+![Screenshot 2025-06-29 175717](https://github.com/user-attachments/assets/2fac8622-86c9-4d17-b02c-ca308d65ed1c)
+![Screenshot 2025-06-29 175806](https://github.com/user-attachments/assets/3cedd7dd-ac7f-49dc-b956-77e479c00fa2)
+
+
+
 ## 🚀 Getting Started
 
 ### Prerequisites
